@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ridax-db
+    environment:
+      POSTGRES_DB: ridax
+      POSTGRES_USER: ridax
+      POSTGRES_PASSWORD: ridax
+    ports:
+      - "5432:5432"
+    volumes:
+      - ridax_db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: ridax-redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: ridax-backend
+    environment:
+      APP_NAME: RIDAX Platform
+      ENVIRONMENT: development
+      API_V1_PREFIX: /api/v1
+      SECRET_KEY: change-this-secret-key
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      PASSWORD_RESET_TTL_MINUTES: ${PASSWORD_RESET_TTL_MINUTES:-15}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql+psycopg2://ridax:ridax@db:5432/ridax
+      CORS_ORIGINS: http://localhost:3000
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_DEFAULT_CHAT_ID: ${TELEGRAM_DEFAULT_CHAT_ID:-}
+      WHATSAPP_VERIFY_TOKEN: ""
+      WHATSAPP_ACCESS_TOKEN: ""
+      WHATSAPP_PHONE_NUMBER_ID: ""
+      DEFAULT_LANGUAGE: es
+      DEFAULT_CURRENCY: USD
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ridax-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  ridax_db_data:
