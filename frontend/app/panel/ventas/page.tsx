@@ -331,10 +331,18 @@ export default function VentasPage() {
                 {generalSettings.show_discount_in_invoice ? <td>{invoice.discount_amount.toFixed(2)}</td> : null}
                 <td>{invoice.total.toFixed(2)}</td>
                 <td>
-                  <button type="button" onClick={() => window.open(`/panel/ventas/recibo/${invoice.invoice_code}`, "_blank")}>
+                  <button
+                    type="button"
+                    onClick={() => window.open(`/panel/ventas/recibo?invoice_code=${encodeURIComponent(invoice.invoice_code)}`, "_blank")}
+                  >
                     Previsualizar
                   </button>
-                  <button type="button" onClick={() => window.open(`/panel/ventas/recibo/${invoice.invoice_code}?print=1`, "_blank")}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.open(`/panel/ventas/recibo?invoice_code=${encodeURIComponent(invoice.invoice_code)}&print=1`, "_blank")
+                    }
+                  >
                     Imprimir
                   </button>
                   <button

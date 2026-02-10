@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 import { apiDownload, apiGet } from "@/lib/api";
 
@@ -44,22 +44,29 @@ type InvoicePayload = {
   }>;
 };
 
-export default function ReciboPreviewPage() {
-  const params = useParams<{ invoice_code: string }>();
+function ReciboPreviewContent() {
   const search = useSearchParams();
+  const invoiceCode = search.get("invoice_code") ?? "";
   const [invoice, setInvoice] = useState<InvoicePayload | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const invoiceCode = params.invoice_code;
+    if (!invoiceCode) {
+      setError("Falta el codigo de factura");
+      setInvoice(null);
+      return;
+    }
+
+    setError("");
     apiGet(`/sales/invoice/${invoiceCode}`)
       .then((data) => {
         setInvoice(data);
       })
       .catch((err) => {
+        setInvoice(null);
         setError(err instanceof Error ? err.message : "No se pudo cargar recibo");
       });
-  }, [params.invoice_code]);
+  }, [invoiceCode]);
 
   useEffect(() => {
     if (invoice && search.get("print") === "1") {
@@ -178,5 +185,13 @@ export default function ReciboPreviewPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function ReciboPreviewPage() {
+  return (
+    <Suspense fallback={<main className="loading-screen">Cargando recibo...</main>}>
+      <ReciboPreviewContent />
+    </Suspense>
   );
 }

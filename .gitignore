@@ -8,3 +8,4 @@ __pycache__
 .env
 backend/.env
 frontend/.env.local
+frontend/out

@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { apiPost } from "@/lib/api";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const search = useSearchParams();
   const token = useMemo(() => search.get("token") ?? "", [search]);
   const [password, setPassword] = useState("");
@@ -66,5 +66,13 @@ export default function ResetPasswordPage() {
         </p>
       </section>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<main className="loading-screen">Cargando...</main>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
