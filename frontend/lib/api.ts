@@ -36,13 +36,20 @@ async function parseResponse(response: Response): Promise<any> {
   return response.json();
 }
 
+function buildHeaders(token?: string, contentType = "application/json"): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": contentType,
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export async function apiGet(path: string): Promise<any> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
     cache: "no-store",
   });
   return parseResponse(response);
@@ -52,12 +59,26 @@ export async function apiPost(path: string, body: unknown): Promise<any> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
     body: JSON.stringify(body),
   });
+  return parseResponse(response);
+}
+
+export async function apiPostPublicForm(path: string, body: Record<string, string>): Promise<any> {
+  const formData = new URLSearchParams();
+  for (const [key, value] of Object.entries(body)) {
+    formData.set(key, value);
+  }
+
+  const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    body: formData.toString(),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+  });
+
   return parseResponse(response);
 }
 
@@ -65,10 +86,7 @@ export async function apiPut(path: string, body: unknown): Promise<any> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     method: "PUT",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
     body: JSON.stringify(body),
   });
   return parseResponse(response);
@@ -78,10 +96,7 @@ export async function apiPatch(path: string, body: unknown = {}): Promise<any> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     method: "PATCH",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
     body: JSON.stringify(body),
   });
   return parseResponse(response);
@@ -91,10 +106,7 @@ export async function apiDelete(path: string): Promise<any> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     method: "DELETE",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
   });
   return parseResponse(response);
 }
@@ -103,9 +115,7 @@ export async function apiDownload(path: string): Promise<Blob> {
   const token = getToken();
   const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     method: "GET",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));

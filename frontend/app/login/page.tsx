@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { apiPost } from "@/lib/api";
+import { apiPostPublicForm } from "@/lib/api";
 import { setToken } from "@/lib/session";
 
 export default function LoginPage() {
@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await apiPost("/auth/login", { email, password });
+      const response = await apiPostPublicForm("/auth/login", { email, password });
       setToken(response.access_token);
       router.push("/panel");
     } catch (err) {

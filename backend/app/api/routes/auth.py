@@ -1,8 +1,10 @@
 import hashlib
 import secrets
+from urllib.parse import parse_qs
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -29,8 +31,34 @@ router = APIRouter()
 settings = get_settings()
 
 
+async def parse_request_payload(request: Request) -> dict:
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+
+    if content_type == "application/json":
+        return await request.json()
+
+    raw = (await request.body()).decode("utf-8", errors="ignore")
+    if not raw:
+        return {}
+
+    if content_type in {"application/x-www-form-urlencoded", "text/plain", ""}:
+        parsed = parse_qs(raw, keep_blank_values=True)
+        return {key: values[0] if values else "" for key, values in parsed.items()}
+
+    try:
+        return await request.json()
+    except Exception:
+        return {}
+
+
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+async def login(request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+    payload_data = await parse_request_payload(request)
+    try:
+        payload = LoginRequest(**payload_data)
+    except ValidationError:
+        raise HTTPException(status_code=422, detail="Credenciales invalidas")
+
     user = db.scalar(select(User).where(User.email == payload.email))
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales invalidas")
@@ -56,7 +84,13 @@ def me(current_user: User = Depends(get_current_user), db: Session = Depends(get
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)) -> MessageResponse:
+async def forgot_password(request: Request, db: Session = Depends(get_db)) -> MessageResponse:
+    payload_data = await parse_request_payload(request)
+    try:
+        payload = ForgotPasswordRequest(**payload_data)
+    except ValidationError:
+        raise HTTPException(status_code=422, detail="Solicitud invalida")
+
     generic_message = "Si existe la cuenta, se enviaron instrucciones de recuperacion."
     user = db.scalar(select(User).where(User.email == payload.email))
     if not user or not user.is_active or not user.telegram_chat_id:
@@ -87,7 +121,13 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)) -> MessageResponse:
+async def reset_password(request: Request, db: Session = Depends(get_db)) -> MessageResponse:
+    payload_data = await parse_request_payload(request)
+    try:
+        payload = ResetPasswordRequest(**payload_data)
+    except ValidationError:
+        raise HTTPException(status_code=422, detail="Solicitud invalida")
+
     now = datetime.now(timezone.utc)
     token_hash = hashlib.sha256(payload.token.encode("utf-8")).hexdigest()
     reset_token = db.scalar(select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash))

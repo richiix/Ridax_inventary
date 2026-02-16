@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-import { apiPost } from "@/lib/api";
+import { apiPostPublicForm } from "@/lib/api";
 
 function ResetPasswordContent() {
   const search = useSearchParams();
@@ -28,7 +28,7 @@ function ResetPasswordContent() {
 
     setLoading(true);
     try {
-      const response = await apiPost("/auth/reset-password", {
+      const response = await apiPostPublicForm("/auth/reset-password", {
         token,
         new_password: password,
       });

@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 
-import { apiPost } from "@/lib/api";
+import { apiPostPublicForm } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setMessage("");
     try {
-      const response = await apiPost("/auth/forgot-password", { email });
+      const response = await apiPostPublicForm("/auth/forgot-password", { email });
       setMessage(response.message ?? "Si existe la cuenta, se enviaron instrucciones.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "No se pudo procesar la solicitud");
