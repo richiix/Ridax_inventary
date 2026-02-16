@@ -9,6 +9,8 @@
   --accent-soft: #ffb07d;
   --ok: #48d7a1;
   --warn: #f0b44a;
+  --price-wholesale: #2f80ed;
+  --price-retail: #f2994a;
 }
 
 .theme-dark {
@@ -22,6 +24,8 @@
   --accent-soft: #ffb07d;
   --ok: #48d7a1;
   --warn: #f0b44a;
+  --price-wholesale: #4aa3ff;
+  --price-retail: #ffb25c;
 }
 
 .theme-light {
@@ -35,6 +39,8 @@
   --accent-soft: #3d8bfd;
   --ok: #198754;
   --warn: #ffc107;
+  --price-wholesale: #1e66d0;
+  --price-retail: #c56a18;
 }
 
 .theme-warm {
@@ -48,6 +54,8 @@
   --accent-soft: #d59661;
   --ok: #3f8c55;
   --warn: #aa6d2d;
+  --price-wholesale: #2f6fb6;
+  --price-retail: #b86a1b;
 }
 
 * {
@@ -429,12 +437,89 @@ th {
   color: var(--text-muted);
 }
 
+.alert-warning {
+  margin: 8px 0 14px;
+  border: 1px solid rgba(240, 180, 74, 0.6);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(240, 180, 74, 0.14);
+  color: #ffd37a;
+  font-weight: 600;
+}
+
 .badge-ok {
   color: var(--ok);
 }
 
 .badge-warn {
   color: var(--warn);
+}
+
+.price-wholesale {
+  color: var(--price-wholesale);
+  font-weight: 700;
+}
+
+.price-retail {
+  color: var(--price-retail);
+  font-weight: 700;
+}
+
+.ventas-block {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(9, 21, 35, 0.55);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.ventas-block h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: var(--accent-soft);
+  letter-spacing: 0.04em;
+}
+
+.ventas-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+  margin: 18px 0;
+}
+
+.ventas-cart-warning {
+  border-color: rgba(240, 180, 74, 0.9);
+  box-shadow: 0 0 0 1px rgba(240, 180, 74, 0.55), 0 0 18px rgba(240, 180, 74, 0.18);
+  animation: ventas-warning-pulse 0.5s ease-in-out 2;
+}
+
+@keyframes ventas-warning-pulse {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.ventas-admin-menu {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  background: rgba(8, 18, 29, 0.38);
+}
+
+.ventas-admin-menu summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.ventas-admin-menu[open] summary {
+  margin-bottom: 10px;
 }
 
 @media print {

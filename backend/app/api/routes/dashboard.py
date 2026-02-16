@@ -45,6 +45,7 @@ def summary(
         select(func.coalesce(func.sum(Sale.total_usd), 0))
         .where(Sale.created_at >= start_dt)
         .where(Sale.created_at < end_dt)
+        .where(Sale.is_voided.is_not(True))
     )
     purchases_total = db.scalar(
         select(func.coalesce(func.sum(Purchase.total_usd), 0))
@@ -83,6 +84,7 @@ def timeseries(
         )
         .where(Sale.created_at >= start_dt)
         .where(Sale.created_at < end_dt)
+        .where(Sale.is_voided.is_not(True))
         .group_by(func.date_trunc("day", Sale.created_at))
         .order_by(func.date_trunc("day", Sale.created_at))
     ).all()

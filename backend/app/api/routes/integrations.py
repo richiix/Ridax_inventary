@@ -40,7 +40,11 @@ def resolve_command(db: Session, text: str, chat_id: str) -> str:
     if command == "/ventas_hoy":
         now = datetime.now(timezone.utc)
         start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
-        total = db.scalar(select(func.coalesce(func.sum(Sale.total_usd), 0)).where(Sale.created_at >= start))
+        total = db.scalar(
+            select(func.coalesce(func.sum(Sale.total_usd), 0))
+            .where(Sale.created_at >= start)
+            .where(Sale.is_voided.is_not(True))
+        )
         return f"Ventas de hoy (USD): {round(float(total or 0), 2)}"
 
     return "Comandos: /stock <SKU>, /ventas_hoy"

@@ -31,12 +31,13 @@ type GeneralSettings = {
   show_discount_in_invoice: boolean;
   sales_rounding_mode: "none" | "nearest_integer";
   default_markup_percent: number;
+  sales_commission_pct: number;
   invoice_tax_enabled: boolean;
   invoice_tax_percent: number;
   ui_theme_mode: "dark" | "light";
 };
 
-const tabs = ["Moneda", "General", "Facturas y gastos"] as const;
+const tabs = ["Moneda", "General", "Facturas y gastos", "Seguridad"] as const;
 type TabName = (typeof tabs)[number];
 
 const moduleOptions = [
@@ -52,6 +53,7 @@ const moduleOptions = [
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabName>("Moneda");
   const [message, setMessage] = useState("");
+  const [currentRole, setCurrentRole] = useState("");
 
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissionCatalog, setPermissionCatalog] = useState<string[]>([]);
@@ -75,6 +77,7 @@ export default function ConfiguracionPage() {
     show_discount_in_invoice: true,
     sales_rounding_mode: "none",
     default_markup_percent: 20,
+    sales_commission_pct: 7,
     invoice_tax_enabled: false,
     invoice_tax_percent: 16,
     ui_theme_mode: "dark",
@@ -86,11 +89,13 @@ export default function ConfiguracionPage() {
   const [channel, setChannel] = useState("telegram");
   const [destination, setDestination] = useState("");
   const [text, setText] = useState("RIDAX prueba de integracion");
+  const [backupFile, setBackupFile] = useState<File | null>(null);
+  const [replaceOnRestore, setReplaceOnRestore] = useState(true);
 
   const selectedRole = useMemo(() => roles.find((r) => r.id === selectedRoleId) ?? null, [roles, selectedRoleId]);
 
   const loadAll = async () => {
-    const [rolesData, permissionsData, langData, currencyData, receiptData, prefData, usersData, generalData] = await Promise.all([
+    const [rolesData, permissionsData, langData, currencyData, receiptData, prefData, usersData, generalData, meData] = await Promise.all([
       apiGet("/settings/roles"),
       apiGet("/settings/permissions/catalog"),
       apiGet("/settings/languages"),
@@ -99,6 +104,7 @@ export default function ConfiguracionPage() {
       apiGet("/settings/preferences/me"),
       apiGet("/settings/users/preferences"),
       apiGet("/settings/general"),
+      apiGet("/auth/me"),
     ]);
 
     setRoles(rolesData);
@@ -110,6 +116,7 @@ export default function ConfiguracionPage() {
     setUserPreferences(prefData);
     setManagedUsers(usersData);
     setGeneral(generalData);
+    setCurrentRole((meData?.role ?? "").toLowerCase());
 
     setSelectedRoleId(rolesData[0]?.id ?? null);
     setSelectedPermissions(rolesData[0]?.permissions ?? []);
@@ -256,10 +263,50 @@ export default function ConfiguracionPage() {
     }
   };
 
+  const exportSecurityBackup = async () => {
+    setMessage("");
+    try {
+      const payload = await apiGet("/settings/security/backup");
+      const pretty = JSON.stringify(payload, null, 2);
+      const blob = new Blob([pretty], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ridax-respaldo-seguridad-${stamp}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setMessage("Respaldo exportado en JSON legible.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "No se pudo exportar respaldo");
+    }
+  };
+
+  const restoreSecurityBackup = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!backupFile) {
+      setMessage("Selecciona un archivo de respaldo JSON.");
+      return;
+    }
+
+    setMessage("");
+    try {
+      const raw = await backupFile.text();
+      const parsed = JSON.parse(raw);
+      const response = await apiPost(`/settings/security/restore?replace_data=${replaceOnRestore ? "true" : "false"}`, parsed);
+      setMessage(
+        `Restauracion completada. Productos: ${response.updated_products}, compras: ${response.added_purchases ?? 0}, ventas: ${response.added_sales}, movimientos: ${response.added_inventory_movements}, historial precios: ${response.added_product_price_history ?? 0}`,
+      );
+      await loadAll();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "No se pudo restaurar respaldo");
+    }
+  };
+
   return (
     <ProtectedShell title="Configuracion" subtitle="Control global por pestañas">
       <div className="tab-row">
-        {tabs.map((tab) => (
+        {tabs.filter((tab) => (tab === "Seguridad" ? currentRole === "admin" : true)).map((tab) => (
           <button key={tab} type="button" className={activeTab === tab ? "tab-btn active" : "tab-btn"} onClick={() => setActiveTab(tab)}>
             {tab}
           </button>
@@ -451,6 +498,15 @@ export default function ConfiguracionPage() {
                     onChange={(e) => setGeneral((prev) => ({ ...prev, default_markup_percent: Number(e.target.value) }))}
                   />
                 </label>
+                <label className="field-label">Comision de venta (%)
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={general.sales_commission_pct}
+                    onChange={(e) => setGeneral((prev) => ({ ...prev, sales_commission_pct: Number(e.target.value) }))}
+                  />
+                </label>
                 <label className="field-label">
                   <input
                     type="checkbox"
@@ -510,6 +566,45 @@ export default function ConfiguracionPage() {
             <input placeholder="Destino (chat_id o numero)" value={destination} onChange={(e) => setDestination(e.target.value)} required />
             <input value={text} onChange={(e) => setText(e.target.value)} required />
             <button type="submit">Enviar prueba</button>
+          </form>
+        </>
+      ) : null}
+
+      {activeTab === "Seguridad" && currentRole === "admin" ? (
+        <>
+          <section className="article-form-section">
+            <h3>Respaldo y restauracion de ventas e inventario</h3>
+            <p className="muted">
+              Usa formato JSON legible (<code>ridax-backup-v2</code>) para exportar y restaurar datos completos.
+            </p>
+            <div className="inline-actions">
+              <button type="button" onClick={exportSecurityBackup}>Exportar respaldo JSON</button>
+            </div>
+          </section>
+
+          <form className="article-form" onSubmit={restoreSecurityBackup}>
+            <section className="article-form-section">
+              <h3>Cargar archivo de restauracion</h3>
+              <div className="inline-actions">
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={(e) => setBackupFile(e.target.files?.[0] ?? null)}
+                />
+                <label className="field-label">
+                  <input
+                    type="checkbox"
+                    checked={replaceOnRestore}
+                    onChange={(e) => setReplaceOnRestore(e.target.checked)}
+                  />
+                  Reemplazar datos actuales antes de restaurar
+                </label>
+                <button type="submit">Restaurar respaldo</button>
+              </div>
+              <p className="muted">
+                Recomendado: mantener activado el reemplazo para una restauracion limpia de ventas e inventario.
+              </p>
+            </section>
           </form>
         </>
       ) : null}

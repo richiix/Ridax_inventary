@@ -18,12 +18,20 @@ def inventory_overview(
     db: Session = Depends(get_db),
     _: User = Depends(require_permission("inventory:view")),
 ) -> list[dict]:
-    products = db.scalars(select(Product).order_by(Product.name.asc())).all()
+    products = db.scalars(
+        select(Product).where(Product.is_active.is_(True)).order_by(Product.name.asc())
+    ).all()
     return [
         {
             "product_id": p.id,
             "sku": p.sku,
             "name": p.name,
+            "product_type": p.product_type,
+            "brand": p.brand,
+            "model": p.model,
+            "wholesale_price": p.wholesale_price,
+            "retail_price": p.retail_price,
+            "currency_code": p.currency_code,
             "stock": p.stock,
             "status": "BAJO" if p.stock <= 5 else "OK",
             "created_at": p.created_at.isoformat(),

@@ -9,6 +9,12 @@ type InventoryRow = {
   product_id: number;
   sku: string;
   name: string;
+  product_type: string;
+  brand: string;
+  model: string;
+  wholesale_price: number;
+  retail_price: number;
+  currency_code: string;
   stock: number;
   status: string;
   created_at: string;
@@ -102,6 +108,12 @@ export default function InventarioPage() {
             <tr>
               <th>SKU</th>
               <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th>Precio mayor</th>
+              <th>Precio detal</th>
+              <th>Moneda</th>
               <th>Stock</th>
               <th>Estado</th>
               <th>Fecha creacion</th>
@@ -112,6 +124,16 @@ export default function InventarioPage() {
               <tr key={row.product_id}>
                 <td>{row.sku}</td>
                 <td>{row.name}</td>
+                <td>{row.product_type || "-"}</td>
+                <td>{row.brand || "-"}</td>
+                <td>{row.model || "-"}</td>
+                <td>
+                  <span className="price-wholesale">{Number(row.wholesale_price ?? 0).toFixed(2)}</span>
+                </td>
+                <td>
+                  <span className="price-retail">{Number(row.retail_price ?? 0).toFixed(2)}</span>
+                </td>
+                <td>{row.currency_code || "-"}</td>
                 <td>{row.stock}</td>
                 <td className={row.status === "BAJO" ? "badge-warn" : "badge-ok"}>{row.status}</td>
                 <td>{new Date(row.created_at).toLocaleString()}</td>

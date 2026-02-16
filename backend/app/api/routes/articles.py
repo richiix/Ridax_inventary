@@ -24,7 +24,9 @@ def list_articles(
     db: Session = Depends(get_db),
     _: User = Depends(require_permission("articles:view")),
 ) -> list[dict]:
-    rows = db.scalars(select(Product).order_by(Product.id.desc())).all()
+    rows = db.scalars(
+        select(Product).where(Product.is_active.is_(True)).order_by(Product.id.desc())
+    ).all()
     return [
         {
             "id": row.id,

@@ -37,6 +37,7 @@ class GeneralSettingsUpdateRequest(BaseModel):
     show_discount_in_invoice: bool
     sales_rounding_mode: str
     default_markup_percent: float
+    sales_commission_pct: float
     invoice_tax_enabled: bool
     invoice_tax_percent: float
     ui_theme_mode: str

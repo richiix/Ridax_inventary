@@ -22,6 +22,11 @@ type InvoicePayload = {
     address: string;
     rif: string;
   };
+  sale: {
+    seller_user_id: number | null;
+    seller_name: string;
+    sale_date: string;
+  };
   totals: {
     subtotal: number;
     discount_pct: number;
@@ -31,6 +36,13 @@ type InvoicePayload = {
     total: number;
     show_discount: boolean;
     tax_enabled: boolean;
+  };
+  payment: {
+    currency_code: string;
+    amount: number | null;
+    rate_to_usd: number | null;
+    amount_usd: number | null;
+    difference_usd: number | null;
   };
   items: Array<{
     sale_id: number;
@@ -114,6 +126,9 @@ function ReciboPreviewContent() {
         <p>
           Codigo: <strong>{invoice.invoice_code}</strong> | Fecha: {new Date(invoice.created_at).toLocaleString()} | Moneda: {invoice.currency_code}
         </p>
+        <p>
+          Vendedor: <strong>{invoice.sale?.seller_name || "-"}</strong> | Fecha venta: {new Date(invoice.sale?.sale_date || invoice.created_at).toLocaleString()}
+        </p>
 
         <div className="stats-grid">
           <article className="stat-item">
@@ -181,6 +196,14 @@ function ReciboPreviewContent() {
           <article className="stat-item">
             <p>Total</p>
             <strong>{invoice.totals.total.toFixed(2)} {invoice.currency_code}</strong>
+          </article>
+          <article className="stat-item">
+            <p>Pago</p>
+            <strong>
+              {Number(invoice.payment?.amount ?? 0).toFixed(2)} {invoice.payment?.currency_code || "USD"}
+            </strong>
+            <p>Equivalente USD: {Number(invoice.payment?.amount_usd ?? 0).toFixed(2)}</p>
+            <p>Diferencia USD: {Number(invoice.payment?.difference_usd ?? 0).toFixed(2)}</p>
           </article>
         </div>
       </section>

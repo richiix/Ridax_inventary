@@ -10,7 +10,7 @@ import { setToken } from "@/lib/session";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@ridax.local");
-  const [password, setPassword] = useState("Admin123!");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -52,16 +52,6 @@ export default function LoginPage() {
         <p className="muted" style={{ marginTop: 12 }}>
           <Link href="/forgot-password">Olvide mi contrasena</Link>
         </p>
-
-        <div className="demo-users">
-          <strong>Usuarios demo:</strong>
-          <br />
-          admin@ridax.local / Admin123!
-          <br />
-          gerente@ridax.local / Gerente123!
-          <br />
-          vendedor@ridax.local / Vendedor123!
-        </div>
       </section>
     </main>
   );
