@@ -122,11 +122,9 @@ export default function InformesPage() {
   const loadRange = async (start: string, end: string) => {
     setMessage("");
     try {
-      const [data, sellerData] = await Promise.all([
-        apiGet(`/reports/range?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`),
-        apiGet(`/reports/commission-by-seller?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`),
-      ]);
+      const data = await apiGet(`/reports/range?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`);
       setRangeReport(data);
+      const sellerData = await apiGet(`/reports/commission-by-seller?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`);
       setSellerCommissionReport(sellerData);
     } catch (err) {
       setRangeReport(null);

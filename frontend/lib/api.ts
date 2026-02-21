@@ -76,7 +76,7 @@ export async function apiGet(path: string): Promise<any> {
   const response = await fetchWithRetry(buildApiUrl(path), {
     headers: buildHeaders(token),
     cache: "no-store",
-  }, { attempts: 2, baseDelayMs: 200, timeoutMs: 6000 });
+  });
   return parseResponse(response);
 }
 

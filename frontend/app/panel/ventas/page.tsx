@@ -274,12 +274,13 @@ export default function VentasPage() {
 
   const load = async () => {
     const salesPath = showVoidedInvoices ? "/sales?only_voided=true" : "/sales";
-    const [productsResult, salesResult, currenciesResult, generalResult, vendorsResult] = await Promise.allSettled([
+    const [productsResult, salesResult, currenciesResult, generalResult, vendorsResult, meResult] = await Promise.allSettled([
       apiGet("/sales/products"),
       apiGet(salesPath),
       apiGet("/sales/currencies"),
       apiGet("/settings/general"),
       apiGet("/sales/vendors"),
+      apiGet("/auth/me"),
     ]);
 
     if (productsResult.status === "fulfilled") {
@@ -326,23 +327,11 @@ export default function VentasPage() {
       setSellers([]);
     }
 
-    try {
-      const cachedRole = String(window.sessionStorage.getItem("ridax_user_role") || "").toLowerCase();
-      const cachedUserId = String(window.sessionStorage.getItem("ridax_user_id") || "");
-      if (cachedRole) {
-        setSellerRole(cachedRole);
-      } else {
-        const meData = await apiGet("/auth/me");
-        setSellerRole(String(meData?.role || "").toLowerCase());
-        if (!sellerUserId && meData?.id) {
-          setSellerUserId(String(meData.id));
-        }
+    if (meResult.status === "fulfilled") {
+      setSellerRole(String(meResult.value?.role || "").toLowerCase());
+      if (!sellerUserId && meResult.value?.id) {
+        setSellerUserId(String(meResult.value.id));
       }
-      if (!sellerUserId && cachedUserId) {
-        setSellerUserId(cachedUserId);
-      }
-    } catch {
-      // ignore storage failures and keep defaults
     }
   };
 
