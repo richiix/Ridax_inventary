@@ -10,3 +10,4 @@ backend/.env
 frontend/.env.local
 frontend/out
 .env.cloudflare
+backups/

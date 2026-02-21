@@ -19,7 +19,11 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await apiPostPublicForm("/auth/login", { email, password });
+      const response = await apiPostPublicForm(
+        "/auth/login",
+        { email, password },
+        { attempts: 6, baseDelayMs: 500, timeoutMs: 8000 },
+      );
       setToken(response.access_token);
       router.push("/panel");
     } catch (err) {
@@ -45,7 +49,7 @@ export default function LoginPage() {
           </label>
           {error ? <p className="error-message">{error}</p> : null}
           <button type="submit" disabled={loading}>
-            {loading ? "Ingresando..." : "Ingresar"}
+            {loading ? "Conectando y validando..." : "Ingresar"}
           </button>
         </form>
 
