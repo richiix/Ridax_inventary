@@ -95,7 +95,7 @@ export default function ConfiguracionPage() {
   const selectedRole = useMemo(() => roles.find((r) => r.id === selectedRoleId) ?? null, [roles, selectedRoleId]);
 
   const loadAll = async () => {
-    const [rolesData, permissionsData, langData, currencyData, receiptData, prefData, usersData, generalData, meData] = await Promise.all([
+    const [rolesData, permissionsData, langData, currencyData, receiptData, prefData, usersData, generalData] = await Promise.all([
       apiGet("/settings/roles"),
       apiGet("/settings/permissions/catalog"),
       apiGet("/settings/languages"),
@@ -104,7 +104,6 @@ export default function ConfiguracionPage() {
       apiGet("/settings/preferences/me"),
       apiGet("/settings/users/preferences"),
       apiGet("/settings/general"),
-      apiGet("/auth/me"),
     ]);
 
     setRoles(rolesData);
@@ -116,7 +115,18 @@ export default function ConfiguracionPage() {
     setUserPreferences(prefData);
     setManagedUsers(usersData);
     setGeneral(generalData);
-    setCurrentRole((meData?.role ?? "").toLowerCase());
+    try {
+      const cachedRole = String(window.sessionStorage.getItem("ridax_user_role") || "").toLowerCase();
+      if (cachedRole) {
+        setCurrentRole(cachedRole);
+      } else {
+        const meData = await apiGet("/auth/me");
+        setCurrentRole(String(meData?.role ?? "").toLowerCase());
+      }
+    } catch {
+      const meData = await apiGet("/auth/me");
+      setCurrentRole(String(meData?.role ?? "").toLowerCase());
+    }
 
     setSelectedRoleId(rolesData[0]?.id ?? null);
     setSelectedPermissions(rolesData[0]?.permissions ?? []);

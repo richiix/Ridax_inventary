@@ -46,6 +46,12 @@ export function ProtectedShell({ title, subtitle, children }: Props) {
     Promise.all([apiGet("/auth/me"), apiGet("/settings/preferences/options"), apiGet("/settings/general")])
       .then(([meData, preferenceOptions, generalSettings]) => {
         setUser(meData);
+        try {
+          window.sessionStorage.setItem("ridax_user_id", String(meData.id ?? ""));
+          window.sessionStorage.setItem("ridax_user_role", String(meData.role ?? ""));
+        } catch {
+          // keep UI functional when storage is unavailable
+        }
         const selectedLanguage = meData.preferred_language ?? preferenceOptions.preferred_language ?? "es";
         const selectedCurrency = meData.preferred_currency ?? preferenceOptions.preferred_currency ?? "USD";
         setLanguage(selectedLanguage);
